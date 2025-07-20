@@ -79,6 +79,8 @@ services:
       BACKUP_DIR: ${BACKUP_DIR}
     env_file:
       - .env
+    volumes:
+      - ./backups:/backups
     networks:
       - medstock_net
 

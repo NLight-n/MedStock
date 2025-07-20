@@ -20,6 +20,9 @@ ENV NODE_ENV production
 # Install tini for better PID 1 handling (optional but recommended)
 RUN apk add --no-cache dumb-init
 
+# Install PostgreSQL client tools for backup/restore
+RUN apk add --no-cache postgresql-client
+
 # Security best practices
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 

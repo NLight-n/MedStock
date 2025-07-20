@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         await pify(pipeline)(minioStream, writeStream);
         dumpPath = localPath;
       }
-      // Run pg_restore in Docker
+      // Run pg_restore directly in this container
       const password = process.env.PG_BACKUP_PASSWORD;
       if (!password) {
         return NextResponse.json({ error: 'PG_BACKUP_PASSWORD not set in environment' }, { status: 500 });
@@ -110,19 +110,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No dump path found' }, { status: 500 });
       }
       const containerDumpPath = `/backups/${(dumpPath ?? '').split('\\').pop()?.split('/').pop()}`;
-      const dockerRestoreCmd = [
-        'docker',
-        'exec',
-        '-e', `PGPASSWORD=${password}`,
-        'medstock-pg-backup',
+      const pgRestoreCmd = [
+        `PGPASSWORD=${password}`,
         'pg_restore',
         '-U', 'postgres',
         '-h', 'postgres',
         '-d', 'medstock',
         containerDumpPath
       ].join(' ');
-      console.log('Executing Docker pg_restore:', dockerRestoreCmd);
-      const { stdout: _stdout, stderr } = await execAsync(dockerRestoreCmd);
+      console.log('Executing pg_restore:', pgRestoreCmd);
+      const { stdout: _stdout, stderr } = await execAsync(pgRestoreCmd);
       if (stderr && !stderr.includes('WARNING')) {
         console.error('pg_restore stderr:', stderr);
         return NextResponse.json({ error: 'Failed to restore: ' + stderr }, { status: 500 });
@@ -162,29 +159,24 @@ export async function POST(request: NextRequest) {
       // Host backup directory (should match Docker volume mount)
       const hostBackupDir = process.env.BACKUP_DIR || path.join(process.cwd(), 'backups');
       const filePath = path.join(hostBackupDir, filename);
-      // Container backup path
-      const containerBackupPath = `/backups/${filename}`;
       // Use dedicated env variable for backup password
       const password = process.env.PG_BACKUP_PASSWORD;
       if (!password) {
         return NextResponse.json({ error: 'PG_BACKUP_PASSWORD not set in environment' }, { status: 500 });
       }
-      // Compose docker exec command to run pg_dump in the backup container with password
-      const dockerPgDumpCmd = [
-        'docker',
-        'exec',
-        '-e', `PGPASSWORD=${password}`,
-        'medstock-pg-backup',
+      // Compose pg_dump command to run directly in this container
+      const pgDumpCmd = [
+        `PGPASSWORD=${password}`,
         'pg_dump',
         '-U', 'postgres',
         '-h', 'postgres',
         '-F', 'c',
-        '-f', containerBackupPath,
+        '-f', filePath,
         'medstock'
       ].join(' ');
-      // Run pg_dump inside the container
-      console.log('Executing Docker pg_dump:', dockerPgDumpCmd);
-      const { stdout: _stdout, stderr } = await execAsync(dockerPgDumpCmd);
+      // Run pg_dump inside the web container
+      console.log('Executing pg_dump:', pgDumpCmd);
+      const { stdout: _stdout, stderr } = await execAsync(pgDumpCmd);
       if (stderr && !stderr.includes('WARNING')) {
         console.error('pg_dump stderr:', stderr);
         return NextResponse.json({ error: 'Failed to create backup: ' + stderr }, { status: 500 });
