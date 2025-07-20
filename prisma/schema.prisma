@@ -1,0 +1,195 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model with role and permissions
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  email         String    @unique
+  password      String
+  role          String    // Doctor, Nurse, Technician, Admin, Others
+  permissions   Permission[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  addedBy       User?     @relation("CreatedUsers", fields: [createdById], references: [id])
+  createdById   String?
+  createdUsers  User[]    @relation("CreatedUsers")
+  stockAdded    Batch[]   @relation("AddedBy")
+  usageRecords  UsageRecord[]
+  createdBackups Backup[] @relation("CreatedBackups")
+  dataLogs      DataLog[] @relation("DataLogs")
+}
+
+// Permission model for granular access control
+model Permission {
+  id            String    @id @default(cuid())
+  name          String    @unique // ViewOnly, EditMaterials, RecordUsage, EditDocuments, ManageSettings, ManageUsers
+  description   String
+  users         User[]
+}
+
+// MaterialType model for parent materials
+model MaterialType {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  materials   Material[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Brand model for parent materials
+model Brand {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  description   String?
+  website       String?
+  contactPerson String?
+  contactEmail  String?
+  contactPhone  String?
+  materials     Material[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Vendor model for parent materials
+model Vendor {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  description   String?
+  address       String?
+  city          String?
+  state         String?
+  country       String?
+  postalCode    String?
+  website       String?
+  contactPerson String?
+  contactEmail  String?
+  contactPhone  String?
+  gstNumber     String?
+  batches       Batch[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Material model for parent materials
+model Material {
+  id            String    @id @default(cuid())
+  name          String
+  size          String?
+  brand         Brand     @relation(fields: [brandId], references: [id])
+  brandId       String
+  materialType  MaterialType @relation(fields: [materialTypeId], references: [id])
+  materialTypeId String
+  batches       Batch[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Batch model for inventory batches
+model Batch {
+  id              String    @id @default(cuid())
+  material        Material  @relation(fields: [materialId], references: [id])
+  materialId      String
+  quantity        Int
+  initialQuantity Int
+  purchaseType    String
+  vendor          Vendor    @relation(fields: [vendorId], references: [id])
+  vendorId        String
+  expirationDate  DateTime
+  storageLocation String
+  lotNumber       String?
+  cost            Float?
+  stockAddedDate  DateTime  @default(now())
+  addedBy         User      @relation("AddedBy", fields: [addedById], references: [id])
+  addedById       String
+  document        Document? @relation(fields: [documentId], references: [id])
+  documentId      String?
+  usageRecords    UsageRecord[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Document model for invoices, delivery challans, and purchase orders
+model Document {
+  id            String    @id @default(cuid())
+  type          String    // Invoice, Delivery Challan, Purchase Order
+  documentNumber String   @unique
+  date          DateTime
+  vendor        String?
+  filePath      String
+  batches       Batch[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Usage Record model for tracking material usage
+model UsageRecord {
+  id            String    @id @default(cuid())
+  patientName   String
+  patientId     String
+  procedureName String
+  procedureDate DateTime
+  physician     String
+  user          User      @relation(fields: [userId], references: [id])
+  userId        String
+  batch         Batch     @relation(fields: [batchId], references: [id])
+  batchId       String
+  quantity      Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Physician model for tracking doctors
+model Physician {
+  id             String    @id @default(cuid())
+  name           String
+  specialization String
+  email          String?
+  phone          String?
+  department     String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+
+
+// Backup model for database backups
+model Backup {
+  id          String    @id @default(cuid())
+  filename    String
+  filePath    String
+  fileSize    Int
+  description String?
+  createdBy   User      @relation("CreatedBackups", fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Data Log model for tracking all changes
+model DataLog {
+  id          String    @id @default(cuid())
+  action      String    // CREATE, UPDATE, DELETE
+  tableName   String    // Material, Batch, Document, etc.
+  recordId    String    // ID of the affected record
+  oldValues   Json?     // Previous values (for updates/deletes)
+  newValues   Json?     // New values (for creates/updates)
+  user        User      @relation("DataLogs", fields: [userId], references: [id])
+  userId      String
+  timestamp   DateTime  @default(now())
+  description String    // Human-readable description of the change
+}
