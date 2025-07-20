@@ -1,0 +1,1 @@
+Temporary storage path for dump file handling during Backup and Restore.
