@@ -37,18 +37,50 @@ MedStock is a web application designed to help hospitals and clinics manage thei
    - You need Docker Desktop installed on your computer (for database and storage).
    - You need a modern web browser (like Chrome or Edge).
 
-2. **Start the App:**
-   - Open a terminal (Command Prompt or PowerShell).
-   - Go to the MedStock folder.
-   - Run: `docker-compose up -d` (this starts the database and storage services).
-   - In another terminal, run: `npm install` (only the first time).
-   - Then run: `npm run build` and `npm start`.
+2. **Prepare Your Project Folder:**
+   - **Clone the MedStock app files and folders from Github.**
+   - **Create a `.env` file** in the root folder (see example below).
 
-3. **Open MedStock:**
+        ```
+        # PostgreSQL
+        POSTGRES_DB=dbname
+        POSTGRES_USER=dbuser
+        POSTGRES_PASSWORD=dbpass
+
+        # pgAdmin
+        PGADMIN_DEFAULT_EMAIL=admin@example.com
+        PGADMIN_DEFAULT_PASSWORD=admin123
+
+        # MinIO
+        MINIO_ROOT_USER=admin
+        MINIO_ROOT_PASSWORD=admin123
+        MINIO_ENABLED=true
+        MINIO_ENDPOINT=http://minio:9000
+        MINIO_PORT=9000
+        MINIO_BUCKET=medstock
+        MINIO_USE_SSL=false
+
+        # NextJS-Webapp
+        DATABASE_URL="postgresql://dbuser:dbpass@postgres:5432/medstock?schema=public"
+        NODE_ENV=production
+        PG_BACKUP_PASSWORD=dbpass
+        BACKUP_DIR=/backups
+
+        NEXTAUTH_URL=http://localhost:3000
+        NEXTAUTH_SECRET=Generate secret key and copy here
+        ```
+
+3. **Start the App:**
+   - Open a terminal (Command Prompt or PowerShell).
+   - Go to the Medstock folder.
+   - Run: `docker compose up -d --build` (this starts the database and storage services).
+
+
+4. **Open MedStock:**
    - Go to [http://localhost:3000](http://localhost:3000) in your browser.
    - The first time, you will see a setup page to create your admin account.
 
-4. **Start Using MedStock:**
+5. **Start Using MedStock:**
    - Add your materials, vendors, and documents.
    - Record usage as you go.
    - Invite other users if needed.

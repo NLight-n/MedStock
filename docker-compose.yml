@@ -75,6 +75,7 @@ services:
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      BACKUP_DIR: ${BACKUP_DIR}
     env_file:
       - .env
     networks:
