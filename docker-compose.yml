@@ -31,17 +31,6 @@ services:
     networks:
       - medstock_net
 
-  pg_backup:
-    image: postgres:17
-    container_name: medstock-pg-backup
-    depends_on:
-      - postgres
-    volumes:
-      - ./backups:/backups
-    entrypoint: [ "sleep", "infinity" ]
-    networks:
-      - medstock_net
-
   minio:
     image: minio/minio
     container_name: medstock-minio
