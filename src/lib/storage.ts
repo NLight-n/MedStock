@@ -12,35 +12,41 @@ const minioConfig = {
   bucket: process.env.MINIO_BUCKET || 'medstock',
 };
 
-const minioClient = new MinioClient({
-  endPoint: minioConfig.endPoint,
-  port: minioConfig.port,
-  useSSL: minioConfig.useSSL,
-  accessKey: minioConfig.accessKey,
-  secretKey: minioConfig.secretKey,
-});
+let minioClient: MinioClient | null = null;
+function getMinioClient() {
+  if (!minioClient) {
+    minioClient = new MinioClient({
+      endPoint: minioConfig.endPoint,
+      port: minioConfig.port,
+      useSSL: minioConfig.useSSL,
+      accessKey: minioConfig.accessKey,
+      secretKey: minioConfig.secretKey,
+    });
+  }
+  return minioClient;
+}
 
 export async function uploadFile(filePath: string, fileBuffer: Buffer | Readable, folder?: string): Promise<string> {
   let objectName = path.basename(filePath);
   if (folder) {
-    objectName = `${folder.replace(/\/+$/, '')}/${objectName}`;
+    objectName = `${folder.replace(/\/+$|\/+/g, '')}/${objectName}`;
   }
-  await minioClient.putObject(minioConfig.bucket, objectName, fileBuffer);
+  await getMinioClient().putObject(minioConfig.bucket, objectName, fileBuffer);
   return objectName;
 }
 
 export async function getFileStream(fileName: string): Promise<Readable> {
-  return await minioClient.getObject(minioConfig.bucket, fileName);
+  return await getMinioClient().getObject(minioConfig.bucket, fileName);
 }
 
 export async function deleteFile(fileName: string): Promise<void> {
-  await minioClient.removeObject(minioConfig.bucket, fileName);
+  await getMinioClient().removeObject(minioConfig.bucket, fileName);
 }
 
 // List all backup files in the 'backups/' folder in MinIO
 export async function listBackupsInMinio(): Promise<Array<{ name: string; size: number; lastModified: Date }>> {
   const objects: Array<{ name: string; size: number; lastModified: Date }> = [];
-  const stream = minioClient.listObjectsV2(minioConfig.bucket, 'backups/', true);
+  const stream = getMinioClient().listObjectsV2(minioConfig.bucket, 'backups/', true);
   return new Promise((resolve, reject) => {
     stream.on('data', obj => {
       if (obj.name) {
