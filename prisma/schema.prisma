@@ -115,8 +115,7 @@ model Batch {
   stockAddedDate  DateTime  @default(now())
   addedBy         User      @relation("AddedBy", fields: [addedById], references: [id])
   addedById       String
-  document        Document? @relation(fields: [documentId], references: [id])
-  documentId      String?
+  documents       BatchDocument[]
   usageRecords    UsageRecord[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -130,9 +129,21 @@ model Document {
   date          DateTime
   vendor        String?
   filePath      String
-  batches       Batch[]
+  batches       BatchDocument[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+// Junction table for many-to-many relationship between Batch and Document
+model BatchDocument {
+  id         String   @id @default(cuid())
+  batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batchId    String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId String
+  createdAt  DateTime @default(now())
+
+  @@unique([batchId, documentId])
 }
 
 // Usage Record model for tracking material usage

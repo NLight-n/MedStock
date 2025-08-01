@@ -21,7 +21,7 @@ interface Batch {
   initialQuantity: number;
   purchaseType: string;
   vendor: { id: string; name: string };
-  document: { id: string; documentNumber: string } | null;
+  documents: { document: { id: string; documentNumber: string } }[];
   addedBy: { username: string; email: string };
   storageLocation: string;
   lotNumber: string | null;
@@ -361,15 +361,19 @@ export default function MaterialDetailsPage({ params }: { params: Promise<{ id: 
                     </div>
                     <div className="space-y-1 flex flex-col justify-center">
                       <label className="text-sm font-medium text-gray-500">Document</label>
-                      {batch.document ? (
-                        <Link
-                          href={`/documents/${batch.document.id}?referrer=inventory/${material.id}`}
-                          target="_blank"
-                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 inline-flex items-center font-medium"
-                          style={{ minHeight: 28 }}
-                        >
-                          {batch.document.documentNumber}
-                        </Link>
+                      {batch.documents.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {batch.documents.map((doc, index) => (
+                            <Link
+                              key={index}
+                              href={`/documents/${doc.document.id}?referrer=inventory/${material.id}`}
+                              target="_blank"
+                              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 inline-flex items-center font-medium text-xs"
+                            >
+                              {doc.document.documentNumber}
+                            </Link>
+                          ))}
+                        </div>
                       ) : (
                         <span className="text-base font-medium text-gray-400" style={{ minHeight: 28 }}>N/A</span>
                       )}
@@ -394,11 +398,11 @@ export default function MaterialDetailsPage({ params }: { params: Promise<{ id: 
                             <span>
                               <ActionsPopup
                                 actions={([
-                                  batch.document && {
+                                  batch.documents.length > 0 && {
                                     label: 'View Document Details',
                                     onClick: (e: React.MouseEvent) => {
                                       e.stopPropagation();
-                                      router.push(`/documents/${batch.document?.id}?referrer=inventory/${material.id}`);
+                                      router.push(`/documents/${batch.documents[0]?.document?.id}?referrer=inventory/${material.id}`);
                                     },
                                     variant: 'default' as const,
                                   },
@@ -495,48 +499,52 @@ export default function MaterialDetailsPage({ params }: { params: Promise<{ id: 
         </Dialog>
 
         <Dialog open={showAddBatchDialog} onOpenChange={setShowAddBatchDialog}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>Add New Batch</DialogTitle>
             </DialogHeader>
-            <BatchForm
-              materialId={materialId}
-              vendors={vendors}
-              documents={documents}
-              onSuccess={handleBatchSuccess}
-              onCancel={() => setShowAddBatchDialog(false)}
-              mode="add"
-            />
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <BatchForm
+                materialId={materialId}
+                vendors={vendors}
+                documents={documents}
+                onSuccess={handleBatchSuccess}
+                onCancel={() => setShowAddBatchDialog(false)}
+                mode="add"
+              />
+            </div>
           </DialogContent>
         </Dialog>
 
         <Dialog open={!!showEditBatchDialog} onOpenChange={() => setShowEditBatchDialog(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>Edit Batch</DialogTitle>
             </DialogHeader>
-            {selectedBatch && (
-              <BatchForm
-                materialId={materialId}
-                batchId={selectedBatch.id}
-                initialData={{
-                  quantity: selectedBatch.quantity,
-                  initialQuantity: selectedBatch.initialQuantity,
-                  expirationDate: selectedBatch.expirationDate.slice(0, 10),
-                  vendorId: selectedBatch.vendor.id,
-                  documentId: selectedBatch.document?.id,
-                  storageLocation: selectedBatch.storageLocation,
-                  purchaseType: selectedBatch.purchaseType,
-                  lotNumber: selectedBatch.lotNumber || '',
-                  cost: selectedBatch.cost ?? undefined,
-                }}
-                vendors={vendors}
-                documents={documents}
-                onSuccess={handleBatchSuccess}
-                onCancel={() => setShowEditBatchDialog(null)}
-                mode="edit"
-              />
-            )}
+            <div className="flex-1 min-h-0 overflow-hidden">
+              {selectedBatch && (
+                <BatchForm
+                  materialId={materialId}
+                  batchId={selectedBatch.id}
+                  initialData={{
+                    quantity: selectedBatch.quantity,
+                    initialQuantity: selectedBatch.initialQuantity,
+                    expirationDate: selectedBatch.expirationDate.slice(0, 10),
+                    vendorId: selectedBatch.vendor.id,
+                    documentIds: selectedBatch.documents.map(d => d.document.id),
+                    storageLocation: selectedBatch.storageLocation,
+                    purchaseType: selectedBatch.purchaseType,
+                    lotNumber: selectedBatch.lotNumber || '',
+                    cost: selectedBatch.cost ?? undefined,
+                  }}
+                  vendors={vendors}
+                  documents={documents}
+                  onSuccess={handleBatchSuccess}
+                  onCancel={() => setShowEditBatchDialog(null)}
+                  mode="edit"
+                />
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>

@@ -31,7 +31,7 @@ export async function PUT(
       initialQuantity,
       expirationDate,
       vendorId,
-      documentId,
+      documentIds,
       storageLocation,
       purchaseType,
       lotNumber,
@@ -49,6 +49,18 @@ export async function PUT(
     
     const currentBatch = await prisma.batch.findUnique({
         where: { id: batchId },
+        include: {
+          documents: {
+            include: {
+              document: { select: { id: true } }
+            }
+          }
+        }
+    });
+
+    // Delete existing document relationships
+    await prisma.batchDocument.deleteMany({
+      where: { batchId }
     });
 
     const batch = await prisma.batch.update({
@@ -58,15 +70,25 @@ export async function PUT(
         initialQuantity,
         expirationDate: new Date(expirationDate),
         vendorId,
-        documentId,
         storageLocation,
         purchaseType,
         lotNumber,
         cost,
+        documents: {
+          create: documentIds?.map((documentId: string) => ({
+            document: {
+              connect: { id: documentId }
+            }
+          })) || []
+        }
       },
       include: {
         vendor: true,
-        document: { select: { id: true, documentNumber: true } },
+        documents: {
+          include: {
+            document: { select: { id: true, documentNumber: true } }
+          }
+        },
         addedBy: { select: { username: true, email: true } },
       },
     });
@@ -80,7 +102,7 @@ export async function PUT(
                 initialQuantity: currentBatch.initialQuantity,
                 expirationDate: currentBatch.expirationDate,
                 vendorId: currentBatch.vendorId,
-                documentId: currentBatch.documentId,
+                documentIds: currentBatch.documents.map(d => d.document.id),
                 storageLocation: currentBatch.storageLocation,
                 purchaseType: currentBatch.purchaseType,
                 lotNumber: currentBatch.lotNumber,
@@ -91,7 +113,7 @@ export async function PUT(
                 initialQuantity,
                 expirationDate,
                 vendorId,
-                documentId,
+                documentIds: documentIds || [],
                 storageLocation,
                 purchaseType,
                 lotNumber,
@@ -142,6 +164,13 @@ export async function DELETE(
 
     const batchToDelete = await prisma.batch.findUnique({
         where: { id: batchId },
+        include: {
+            documents: {
+                include: {
+                    document: { select: { id: true } }
+                }
+            }
+        }
     });
 
     if (!batchToDelete) {
@@ -160,7 +189,7 @@ export async function DELETE(
             initialQuantity: batchToDelete.initialQuantity,
             expirationDate: batchToDelete.expirationDate,
             vendorId: batchToDelete.vendorId,
-            documentId: batchToDelete.documentId,
+            documentIds: batchToDelete.documents.map(d => d.document.id),
             storageLocation: batchToDelete.storageLocation,
             purchaseType: batchToDelete.purchaseType,
             lotNumber: batchToDelete.lotNumber,

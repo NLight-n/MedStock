@@ -35,7 +35,7 @@ export default function DocumentsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [vendors, setVendors] = useState<{ id: string; name: string }[]>([]);
-  const docTypes = ["Invoice", "Delivery Challan", "Purchase Order"];
+  const docTypes = ["Invoice", "Delivery Challan", "Purchase Order", "Governing Council", "Others"];
   const [totalCount, setTotalCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -158,7 +158,7 @@ export default function DocumentsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Documents</h1>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Manage invoices, delivery challans, and purchase orders
+            Manage invoices, delivery challans, purchase orders, governing council documents, and other documents
           </p>
         </div>
         {hasEditPermission && (

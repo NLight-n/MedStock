@@ -143,7 +143,7 @@ export default function DocumentUploadPage() {
         </Link>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Upload Document</h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Upload a new invoice, delivery challan, or purchase order
+          Upload a new invoice, delivery challan, purchase order, governing council document, or other document
         </p>
       </div>
 
@@ -164,6 +164,8 @@ export default function DocumentUploadPage() {
               <SelectItem value="Invoice">Invoice</SelectItem>
               <SelectItem value="Delivery Challan">Delivery Challan</SelectItem>
               <SelectItem value="Purchase Order">Purchase Order</SelectItem>
+              <SelectItem value="Governing Council">Governing Council</SelectItem>
+              <SelectItem value="Others">Others</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -175,7 +177,7 @@ export default function DocumentUploadPage() {
             type="text"
             value={formData.documentNumber}
             onChange={(e) => setFormData(prev => ({ ...prev, documentNumber: e.target.value }))}
-            placeholder="e.g., INV-001, DC-001, PO-001"
+            placeholder="e.g., INV-001, DC-001, PO-001, GC-001"
             required
           />
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
@@ -14,6 +14,15 @@ interface SearchableSelectProps {
   options: SearchableSelectOption[];
   value?: string;
   onValueChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+}
+
+interface MultiSearchableSelectProps {
+  options: SearchableSelectOption[];
+  value?: string[];
+  onValueChange: (value: string[]) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -170,6 +179,164 @@ export function SearchableSelect({
             ))
           ) : (
             <div className="px-2 py-1.5 text-sm text-muted-foreground">No options found</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function MultiSearchableSelect({
+  options,
+  value = [],
+  onValueChange,
+  placeholder = "Select options",
+  disabled = false,
+  className,
+}: MultiSearchableSelectProps) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Filter options based on search term and exclude already selected ones
+  const filteredOptions = React.useMemo(() => {
+    let filtered = options.filter(option =>
+      option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    // Exclude already selected options
+    filtered = filtered.filter(option => !value.includes(option.value));
+    return filtered;
+  }, [options, searchTerm, value]);
+
+  // Get selected options
+  const selectedOptions = React.useMemo(() => {
+    return options.filter(option => value.includes(option.value));
+  }, [options, value]);
+
+  // Handle click outside to close dropdown
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+        setSearchTerm("");
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isOpen]);
+
+  // Open dropdown on focus
+  const handleFocus = () => {
+    setIsOpen(true);
+  };
+
+  // Handle input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setIsOpen(true);
+  };
+
+  // Handle option select
+  const handleOptionSelect = (option: SearchableSelectOption) => {
+    const newValue = [...value, option.value];
+    onValueChange(newValue);
+    setSearchTerm("");
+  };
+
+  // Handle option remove
+  const handleOptionRemove = (optionValue: string) => {
+    const newValue = value.filter(v => v !== optionValue);
+    onValueChange(newValue);
+  };
+
+  // Keyboard navigation
+  const [highlightedIndex, setHighlightedIndex] = React.useState<number>(-1);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isOpen && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+      setIsOpen(true);
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      setHighlightedIndex(i => Math.min(i + 1, filteredOptions.length - 1));
+    } else if (event.key === "ArrowUp") {
+      setHighlightedIndex(i => Math.max(i - 1, 0));
+    } else if (event.key === "Enter" && isOpen && highlightedIndex >= 0) {
+      handleOptionSelect(filteredOptions[highlightedIndex]);
+    } else if (event.key === "Escape") {
+      setIsOpen(false);
+      setSearchTerm("");
+    }
+  };
+
+  return (
+    <div className={cn("relative", className)} style={{ maxWidth: 340 }}>
+      <div className="flex flex-wrap gap-1 p-2 border rounded-md bg-background">
+        {/* Selected options */}
+        {selectedOptions.map((option) => (
+          <div
+            key={option.value}
+            className="flex items-center gap-1 px-2 py-1 bg-primary text-primary-foreground rounded-md text-sm"
+          >
+            <span className="truncate max-w-32">{option.label}</span>
+            <button
+              type="button"
+              onClick={() => handleOptionRemove(option.value)}
+              className="ml-1 hover:bg-primary/80 rounded-full p-0.5"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        ))}
+        
+        {/* Input for search */}
+        <Input
+          ref={inputRef}
+          type="text"
+          value={searchTerm}
+          onChange={handleInputChange}
+          onFocus={handleFocus}
+          onKeyDown={handleKeyDown}
+          placeholder={selectedOptions.length === 0 ? placeholder : "Add more..."}
+          disabled={disabled}
+          className="flex-1 min-w-0 border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+      </div>
+      
+      {isOpen && (
+        <div
+          ref={dropdownRef}
+          className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border rounded-md shadow-md max-h-60 overflow-auto"
+          style={{ maxWidth: 340 }}
+        >
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((option, idx) => (
+              <button
+                key={option.value}
+                type="button"
+                className={cn(
+                  "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none text-left hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground truncate",
+                  idx === highlightedIndex && "bg-accent text-accent-foreground"
+                )}
+                onClick={() => handleOptionSelect(option)}
+                onMouseEnter={() => setHighlightedIndex(idx)}
+                style={{ maxWidth: 340 }}
+              >
+                <span className="truncate block" style={{ maxWidth: 300 }}>{option.label}</span>
+              </button>
+            ))
+          ) : (
+            <div className="px-2 py-1.5 text-sm text-muted-foreground">
+              {searchTerm ? "No options found" : "All options selected"}
+            </div>
           )}
         </div>
       )}

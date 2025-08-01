@@ -4,35 +4,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { logCreate } from '@/lib/data-logger'
 
-interface Batch {
-  id: string
-  quantity: number
-  purchaseType: string
-  vendorId: string
-  vendor: {
-    id: string
-    name: string
-  }
-  document?: {
-    id: string
-    documentNumber: string
-  } | null
-  expirationDate: Date
-}
 
-interface Material {
-  id: string
-  name: string
-  brand: {
-    id: string
-    name: string
-  }
-  materialType: {
-    id: string
-    name: string
-  }
-  batches: Batch[]
-}
+
+
 
 interface SearchCondition {
   name?: { contains: string; mode: 'insensitive' }
@@ -89,14 +63,18 @@ export async function GET(request: Request) {
         batches: {
           include: {
             vendor: true,
-            document: true,
+            documents: {
+              include: {
+                document: { select: { id: true, documentNumber: true } }
+              }
+            },
           },
         },
       },
       orderBy: {
         name: 'asc'
       }
-    }) as unknown as Material[]
+    })
 
     // Get total count before further filtering (for y value)
     const totalCount = materials.length;
@@ -182,7 +160,11 @@ export async function POST(request: Request) {
         batches: {
           include: {
             vendor: true,
-            document: { select: { id: true, documentNumber: true } },
+            documents: {
+              include: {
+                document: { select: { id: true, documentNumber: true } }
+              }
+            },
             addedBy: { select: { username: true, email: true } },
           },
           orderBy: { expirationDate: 'asc' },

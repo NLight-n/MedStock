@@ -22,8 +22,7 @@ interface Batch {
   lotNumber: string;
   expirationDate: string;
   storageLocation: string;
-  document?: { id: string; documentNumber: string } | null;
-  documentId?: string;
+  documents: { document: { id: string; documentNumber: string } }[];
   stockAddedDate: string;
   stockAddedBy: string;
 }
@@ -483,14 +482,19 @@ export default function InventoryPage() {
                                     <td className="px-4 py-2">{new Date(batch.expirationDate).toLocaleDateString()}</td>
                                     <td className="px-4 py-2">{batch.storageLocation}</td>
                                     <td className="px-4 py-2">
-                                      {batch.document ? (
-                                        <Link
-                                          href={`/documents/${batch.document.id}?${query.toString()}`}
-                                          className="text-indigo-600 hover:text-indigo-900"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          {batch.document.documentNumber}
-                                        </Link>
+                                      {batch.documents && batch.documents.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1">
+                                          {batch.documents.map((doc) => (
+                                            <Link
+                                              key={doc.document.id}
+                                              href={`/documents/${doc.document.id}?${query.toString()}`}
+                                              className="text-indigo-600 hover:text-indigo-900 text-xs"
+                                              onClick={(e) => e.stopPropagation()}
+                                            >
+                                              {doc.document.documentNumber}
+                                            </Link>
+                                          ))}
+                                        </div>
                                       ) : (
                                         <span className="text-gray-400">-</span>
                                       )}

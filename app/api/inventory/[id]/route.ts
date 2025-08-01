@@ -18,7 +18,11 @@ export async function GET(
         batches: {
           include: {
             vendor: true,
-            document: { select: { id: true, documentNumber: true } },
+            documents: {
+              include: {
+                document: { select: { id: true, documentNumber: true } }
+              }
+            },
             addedBy: { select: { username: true, email: true } },
           },
           orderBy: { expirationDate: 'asc' },
@@ -75,7 +79,11 @@ export async function PUT(
         batches: {
           include: {
             vendor: true,
-            document: { select: { id: true, documentNumber: true } },
+            documents: {
+              include: {
+                document: { select: { id: true, documentNumber: true } }
+              }
+            },
             addedBy: { select: { username: true, email: true } },
           },
           orderBy: { expirationDate: 'asc' },

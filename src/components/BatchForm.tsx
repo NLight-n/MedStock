@@ -9,14 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { SearchableSelect } from '@/components/ui/searchable-select';
+import { SearchableSelect, MultiSearchableSelect } from '@/components/ui/searchable-select';
 
 type BatchFormData = {
   quantity: number;
   initialQuantity: number;
   expirationDate: string;
   vendorId: string;
-  documentId?: string;
+  documentIds?: string[];
   storageLocation: string;
   purchaseType: string;
   lotNumber?: string;
@@ -32,7 +32,7 @@ const batchSchema = z.object({
     .min(0, 'Initial quantity must be positive'),
   expirationDate: z.string().min(1, 'Expiration date is required'),
   vendorId: z.string().min(1, 'Vendor is required'),
-  documentId: z.string().optional(),
+  documentIds: z.array(z.string()).optional(),
   storageLocation: z.string().min(1, 'Storage location is required'),
   purchaseType: z.string().min(1, 'Purchase type is required'),
   lotNumber: z.string().optional(),
@@ -87,7 +87,7 @@ export function BatchForm({
       initialQuantity: 0,
       expirationDate: '',
       vendorId: '',
-      documentId: undefined,
+      documentIds: undefined,
       storageLocation: '',
       purchaseType: '',
       lotNumber: '',
@@ -133,131 +133,135 @@ export function BatchForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <Label htmlFor="quantity">Quantity</Label>
-        <Input
-          id="quantity"
-          type="number"
-          {...register('quantity')}
-          className={errors.quantity ? 'border-red-500' : ''}
-        />
-        {errors.quantity && (
-          <p className="text-sm text-red-500">{errors.quantity.message}</p>
-        )}
-      </div>
-      {mode === 'edit' && (
-        <div>
-          <Label htmlFor="initialQuantity">Initial Quantity</Label>
-          <Input
-            id="initialQuantity"
-            type="number"
-            {...register('initialQuantity')}
-            className={errors.initialQuantity ? 'border-red-500' : ''}
-          />
-          {errors.initialQuantity && (
-            <p className="text-sm text-red-500">{errors.initialQuantity.message}</p>
+    <div className="flex flex-col h-full max-h-[calc(100vh-200px)]">
+      <div className="flex-1 overflow-y-auto pr-2 pb-4 min-h-0">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <Label htmlFor="quantity">Quantity</Label>
+            <Input
+              id="quantity"
+              type="number"
+              {...register('quantity')}
+              className={errors.quantity ? 'border-red-500' : ''}
+            />
+            {errors.quantity && (
+              <p className="text-sm text-red-500">{errors.quantity.message}</p>
+            )}
+          </div>
+          {mode === 'edit' && (
+            <div>
+              <Label htmlFor="initialQuantity">Initial Quantity</Label>
+              <Input
+                id="initialQuantity"
+                type="number"
+                {...register('initialQuantity')}
+                className={errors.initialQuantity ? 'border-red-500' : ''}
+              />
+              {errors.initialQuantity && (
+                <p className="text-sm text-red-500">{errors.initialQuantity.message}</p>
+              )}
+            </div>
           )}
-        </div>
-      )}
-      {/* Hidden input for initialQuantity in add mode */}
-      {mode === 'add' && (
-        <input type="hidden" {...register('initialQuantity')} />
-      )}
-      <div>
-        <Label htmlFor="expirationDate">Expiration Date</Label>
-        <Input
-          id="expirationDate"
-          type="date"
-          {...register('expirationDate')}
-          className={errors.expirationDate ? 'border-red-500' : ''}
-        />
-        {errors.expirationDate && (
-          <p className="text-sm text-red-500">{errors.expirationDate.message}</p>
-        )}
+          {/* Hidden input for initialQuantity in add mode */}
+          {mode === 'add' && (
+            <input type="hidden" {...register('initialQuantity')} />
+          )}
+          <div>
+            <Label htmlFor="expirationDate">Expiration Date</Label>
+            <Input
+              id="expirationDate"
+              type="date"
+              {...register('expirationDate')}
+              className={errors.expirationDate ? 'border-red-500' : ''}
+            />
+            {errors.expirationDate && (
+              <p className="text-sm text-red-500">{errors.expirationDate.message}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="vendorId">Vendor</Label>
+            <SearchableSelect
+              options={vendors.map(v => ({ value: v.id, label: v.name }))}
+              value={watch('vendorId')}
+              onValueChange={value => setValue('vendorId', value, { shouldValidate: true })}
+              placeholder="Select a vendor"
+            />
+            {errors.vendorId && (
+              <p className="text-sm text-red-500">{errors.vendorId.message}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="documentIds">Documents (Optional)</Label>
+            <MultiSearchableSelect
+              options={documents.map(d => ({ value: d.id, label: d.documentNumber }))}
+              value={watch('documentIds')}
+              onValueChange={value => setValue('documentIds', value, { shouldValidate: true })}
+              placeholder="Select documents"
+            />
+          </div>
+          <div>
+            <Label htmlFor="storageLocation">Storage Location</Label>
+            <Input
+              id="storageLocation"
+              {...register('storageLocation')}
+              className={errors.storageLocation ? 'border-red-500' : ''}
+            />
+            {errors.storageLocation && (
+              <p className="text-sm text-red-500">{errors.storageLocation.message}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="purchaseType">Purchase Type</Label>
+            <Select
+              onValueChange={(value: string) => setValue('purchaseType', value, { shouldValidate: true })}
+              defaultValue={initialData?.purchaseType}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select purchase type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Purchased">Purchased</SelectItem>
+                <SelectItem value="Advance">Advance</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.purchaseType && (
+              <p className="text-sm text-red-500">{errors.purchaseType.message}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="lotNumber">Lot Number (Optional)</Label>
+            <Input
+              id="lotNumber"
+              {...register('lotNumber')}
+              className={errors.lotNumber ? 'border-red-500' : ''}
+            />
+            {errors.lotNumber && (
+              <p className="text-sm text-red-500">{errors.lotNumber.message}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="cost">Cost (Optional)</Label>
+            <Input
+              id="cost"
+              type="number"
+              step="0.01"
+              {...register('cost')}
+              className={errors.cost ? 'border-red-500' : ''}
+            />
+            {errors.cost && (
+              <p className="text-sm text-red-500">{errors.cost.message}</p>
+            )}
+          </div>
+        </form>
       </div>
-      <div>
-        <Label htmlFor="vendorId">Vendor</Label>
-        <SearchableSelect
-          options={vendors.map(v => ({ value: v.id, label: v.name }))}
-          value={watch('vendorId')}
-          onValueChange={value => setValue('vendorId', value, { shouldValidate: true })}
-          placeholder="Select a vendor"
-        />
-        {errors.vendorId && (
-          <p className="text-sm text-red-500">{errors.vendorId.message}</p>
-        )}
-      </div>
-      <div>
-        <Label htmlFor="documentId">Document (Optional)</Label>
-        <SearchableSelect
-          options={documents.map(d => ({ value: d.id, label: d.documentNumber }))}
-          value={watch('documentId')}
-          onValueChange={value => setValue('documentId', value, { shouldValidate: true })}
-          placeholder="Select a document"
-        />
-      </div>
-      <div>
-        <Label htmlFor="storageLocation">Storage Location</Label>
-        <Input
-          id="storageLocation"
-          {...register('storageLocation')}
-          className={errors.storageLocation ? 'border-red-500' : ''}
-        />
-        {errors.storageLocation && (
-          <p className="text-sm text-red-500">{errors.storageLocation.message}</p>
-        )}
-      </div>
-      <div>
-        <Label htmlFor="purchaseType">Purchase Type</Label>
-        <Select
-          onValueChange={(value: string) => setValue('purchaseType', value, { shouldValidate: true })}
-          defaultValue={initialData?.purchaseType}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select purchase type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Purchased">Purchased</SelectItem>
-            <SelectItem value="Advance">Advance</SelectItem>
-          </SelectContent>
-        </Select>
-        {errors.purchaseType && (
-          <p className="text-sm text-red-500">{errors.purchaseType.message}</p>
-        )}
-      </div>
-      <div>
-        <Label htmlFor="lotNumber">Lot Number (Optional)</Label>
-        <Input
-          id="lotNumber"
-          {...register('lotNumber')}
-          className={errors.lotNumber ? 'border-red-500' : ''}
-        />
-        {errors.lotNumber && (
-          <p className="text-sm text-red-500">{errors.lotNumber.message}</p>
-        )}
-      </div>
-      <div>
-        <Label htmlFor="cost">Cost (Optional)</Label>
-        <Input
-          id="cost"
-          type="number"
-          step="0.01"
-          {...register('cost')}
-          className={errors.cost ? 'border-red-500' : ''}
-        />
-        {errors.cost && (
-          <p className="text-sm text-red-500">{errors.cost.message}</p>
-        )}
-      </div>
-      <div className="flex justify-end space-x-2">
+      <div className="flex justify-end space-x-2 pt-4 border-t mt-4 flex-shrink-0 bg-background" style={{ paddingBottom: '12px', marginBottom: '8px' }}>
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} onClick={handleSubmit(onSubmit)}>
           {loading ? 'Saving...' : mode === 'add' ? 'Add Batch' : 'Save Changes'}
         </Button>
       </div>
-    </form>
+    </div>
   );
 } 

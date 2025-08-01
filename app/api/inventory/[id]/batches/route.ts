@@ -70,7 +70,7 @@ export async function POST(
       initialQuantity,
       expirationDate,
       vendorId,
-      documentId,
+      documentIds,
       storageLocation,
       purchaseType,
       lotNumber,
@@ -92,7 +92,6 @@ export async function POST(
         initialQuantity,
         expirationDate: new Date(expirationDate),
         vendorId,
-        documentId,
         storageLocation,
         purchaseType,
         lotNumber,
@@ -102,7 +101,30 @@ export async function POST(
       },
       include: {
         vendor: true,
-        document: { select: { id: true, documentNumber: true } },
+        addedBy: { select: { username: true, email: true } },
+      },
+    });
+
+    // Create document relationships if documentIds are provided
+    if (documentIds && documentIds.length > 0) {
+      await prisma.batchDocument.createMany({
+        data: documentIds.map((documentId: string) => ({
+          batchId: batch.id,
+          documentId: documentId
+        }))
+      });
+    }
+
+    // Fetch the batch with documents for response
+    const batchWithDocuments = await prisma.batch.findUnique({
+      where: { id: batch.id },
+      include: {
+        vendor: true,
+        documents: {
+          include: {
+            document: { select: { id: true, documentNumber: true } }
+          }
+        },
         addedBy: { select: { username: true, email: true } },
       },
     });
@@ -116,7 +138,7 @@ export async function POST(
         initialQuantity: batch.initialQuantity,
         expirationDate: batch.expirationDate,
         vendorId: batch.vendorId,
-        documentId: batch.documentId,
+        documentIds: documentIds || [],
         storageLocation: batch.storageLocation,
         purchaseType: batch.purchaseType,
         lotNumber: batch.lotNumber,
@@ -127,7 +149,7 @@ export async function POST(
       `Created batch for material: ${material.name} (Quantity: ${quantity})`
     );
 
-    return NextResponse.json(batch);
+    return NextResponse.json(batchWithDocuments);
   } catch (error) {
     console.error('Error creating batch:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -162,7 +184,7 @@ export async function PUT(
       initialQuantity,
       expirationDate,
       vendorId,
-      documentId,
+      documentIds,
       storageLocation,
       purchaseType,
       lotNumber,
@@ -181,6 +203,18 @@ export async function PUT(
     // Get current batch for logging
     const currentBatch = await prisma.batch.findUnique({
       where: { id: batchId },
+      include: {
+        documents: {
+          include: {
+            document: { select: { id: true } }
+          }
+        }
+      }
+    });
+
+    // Delete existing document relationships
+    await prisma.batchDocument.deleteMany({
+      where: { batchId }
     });
 
     const batch = await prisma.batch.update({
@@ -190,15 +224,25 @@ export async function PUT(
         initialQuantity,
         expirationDate: new Date(expirationDate),
         vendorId,
-        documentId,
         storageLocation,
         purchaseType,
         lotNumber,
         cost,
+        documents: {
+          create: documentIds?.map((documentId: string) => ({
+            document: {
+              connect: { id: documentId }
+            }
+          })) || []
+        }
       },
       include: {
         vendor: true,
-        document: { select: { id: true, documentNumber: true } },
+        documents: {
+          include: {
+            document: { select: { id: true, documentNumber: true } }
+          }
+        },
         addedBy: { select: { username: true, email: true } },
       },
     });
@@ -213,7 +257,7 @@ export async function PUT(
           initialQuantity: currentBatch.initialQuantity,
           expirationDate: currentBatch.expirationDate,
           vendorId: currentBatch.vendorId,
-          documentId: currentBatch.documentId,
+          documentIds: currentBatch.documents.map(d => d.document.id),
           storageLocation: currentBatch.storageLocation,
           purchaseType: currentBatch.purchaseType,
           lotNumber: currentBatch.lotNumber,
@@ -224,7 +268,7 @@ export async function PUT(
           initialQuantity: batch.initialQuantity,
           expirationDate: batch.expirationDate,
           vendorId: batch.vendorId,
-          documentId: batch.documentId,
+          documentIds: documentIds || [],
           storageLocation: batch.storageLocation,
           purchaseType: batch.purchaseType,
           lotNumber: batch.lotNumber,

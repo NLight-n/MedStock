@@ -119,7 +119,11 @@ async function main() {
             storageLocation: 'Shelf 1',
             stockAddedDate: new Date('2024-06-01'),
             addedById: adminUser.id,
-            documentId: doc1.id
+            documents: {
+              create: [
+                { documentId: doc1.id }
+              ]
+            }
           },
           {
             purchaseType: 'Advance',
@@ -131,7 +135,11 @@ async function main() {
             storageLocation: 'Shelf 2',
             stockAddedDate: new Date('2024-05-10'),
             addedById: adminUser.id,
-            documentId: doc2.id
+            documents: {
+              create: [
+                { documentId: doc2.id }
+              ]
+            }
           }
         ]
       }
@@ -156,7 +164,11 @@ async function main() {
             storageLocation: 'Shelf 3',
             stockAddedDate: new Date('2024-06-05'),
             addedById: adminUser.id,
-            documentId: doc1.id
+            documents: {
+              create: [
+                { documentId: doc1.id }
+              ]
+            }
           },
           {
             purchaseType: 'Advance',
@@ -168,7 +180,11 @@ async function main() {
             storageLocation: 'Shelf 4',
             stockAddedDate: new Date('2024-05-20'),
             addedById: adminUser.id,
-            documentId: doc2.id
+            documents: {
+              create: [
+                { documentId: doc2.id }
+              ]
+            }
           }
         ]
       }
@@ -193,7 +209,11 @@ async function main() {
             storageLocation: 'Shelf 5',
             stockAddedDate: new Date('2024-06-10'),
             addedById: adminUser.id,
-            documentId: doc3.id
+            documents: {
+              create: [
+                { documentId: doc3.id }
+              ]
+            }
           },
           {
             purchaseType: 'Advance',
@@ -205,7 +225,11 @@ async function main() {
             storageLocation: 'Shelf 6',
             stockAddedDate: new Date('2024-05-25'),
             addedById: adminUser.id,
-            documentId: doc1.id
+            documents: {
+              create: [
+                { documentId: doc1.id }
+              ]
+            }
           }
         ]
       }
@@ -230,7 +254,11 @@ async function main() {
             storageLocation: 'Shelf 7',
             stockAddedDate: new Date('2024-06-15'),
             addedById: adminUser.id,
-            documentId: doc2.id
+            documents: {
+              create: [
+                { documentId: doc2.id }
+              ]
+            }
           },
           {
             purchaseType: 'Advance',
@@ -242,7 +270,11 @@ async function main() {
             storageLocation: 'Shelf 8',
             stockAddedDate: new Date('2024-05-30'),
             addedById: adminUser.id,
-            documentId: doc3.id
+            documents: {
+              create: [
+                { documentId: doc3.id }
+              ]
+            }
           }
         ]
       }

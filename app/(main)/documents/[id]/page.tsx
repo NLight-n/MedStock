@@ -17,10 +17,14 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
       where: { id },
       include: {
         batches: {
-          select: {
-            id: true,
-            lotNumber: true,
-            material: { select: { id: true, name: true, brand: true } }
+          include: {
+            batch: {
+              select: {
+                id: true,
+                lotNumber: true,
+                material: { select: { id: true, name: true, brand: true } }
+              }
+            }
           }
         }
       }
@@ -128,8 +132,12 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {document.batches.map((batch) => (
-                        <BatchActionsPopup key={batch.id} batch={batch} actionCellClassName="sticky right-0 bg-white dark:bg-gray-800" />
+                      {document.batches.map((batchDocument) => (
+                        <BatchActionsPopup 
+                          key={batchDocument.batch.id} 
+                          batch={batchDocument.batch} 
+                          actionCellClassName="sticky right-0 bg-white dark:bg-gray-800" 
+                        />
                       ))}
                     </tbody>
                   </table>
