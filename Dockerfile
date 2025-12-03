@@ -9,6 +9,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY . .
 COPY --from=deps /app/node_modules ./node_modules
+RUN npm install prisma@6.9.0 @prisma/client@6.9.0
 RUN npx prisma generate
 RUN npm run build
 
