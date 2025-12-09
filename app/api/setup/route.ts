@@ -42,12 +42,12 @@ export async function POST(request: Request) {
         role: 'ADMIN',
         permissions: {
           create: [
-            { name: 'VIEW_ONLY', description: 'View all modules' },
-            { name: 'EDIT_MATERIALS', description: 'Add/edit inventory items and batches' },
-            { name: 'RECORD_USAGE', description: 'Record materials used during procedures' },
-            { name: 'EDIT_DOCUMENTS', description: 'Upload, edit, delete document images and metadata' },
-            { name: 'MANAGE_SETTINGS', description: 'Access to manage master data and settings' },
-            { name: 'MANAGE_USERS', description: 'Manage users and permissions' }
+            { name: 'View Only', description: 'View all modules' },
+            { name: 'Edit Materials', description: 'Add/edit inventory items and batches' },
+            { name: 'Record Usage', description: 'Record materials used during procedures' },
+            { name: 'Edit Documents', description: 'Upload, edit, delete document images and metadata' },
+            { name: 'Manage Settings', description: 'Access to manage master data and settings' },
+            { name: 'Manage Users', description: 'Manage users and permissions' }
           ]
         }
       },

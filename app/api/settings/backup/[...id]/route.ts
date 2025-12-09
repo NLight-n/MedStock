@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { deleteFile } from '@/lib/storage';
 import { logDelete } from '@/lib/data-logger';
+import { hasPermissionByName } from '@/lib/permissions';
 
 export async function DELETE(
   request: NextRequest,
@@ -19,7 +20,7 @@ export async function DELETE(
       where: { id: session.user.id },
       include: { permissions: true },
     });
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Settings');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Settings') : false;
     if (!hasPermission) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }

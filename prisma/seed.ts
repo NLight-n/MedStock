@@ -15,12 +15,12 @@ async function main() {
 
   // Create permissions
   const permissions = [
-    { name: 'ViewOnly', description: 'View all modules' },
-    { name: 'EditMaterials', description: 'Add/edit inventory items and batches' },
-    { name: 'RecordUsage', description: 'Record materials used during procedures' },
-    { name: 'EditDocuments', description: 'Upload, edit, delete document images and metadata' },
-    { name: 'ManageSettings', description: 'Access to manage master data and settings' },
-    { name: 'ManageUsers', description: 'Admin only: manage users, assign roles and permissions' }
+    { name: 'View Only', description: 'View all modules' },
+    { name: 'Edit Materials', description: 'Add/edit inventory items and batches' },
+    { name: 'Record Usage', description: 'Record materials used during procedures' },
+    { name: 'Edit Documents', description: 'Upload, edit, delete document images and metadata' },
+    { name: 'Manage Settings', description: 'Access to manage master data and settings' },
+    { name: 'Manage Users', description: 'Admin only: manage users, assign roles and permissions' }
   ];
 
   for (const permission of permissions) {

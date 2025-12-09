@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logUpdate, logDelete } from '@/lib/data-logger';
 import bcrypt from 'bcryptjs';
+import { hasPermissionByName } from '@/lib/permissions';
 
 export async function PUT(
   request: NextRequest,
@@ -21,7 +22,7 @@ export async function PUT(
       include: { permissions: true },
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Users');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Users') : false;
     if (!hasPermission) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
@@ -139,7 +140,7 @@ export async function DELETE(
       include: { permissions: true },
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Users');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Users') : false;
     if (!hasPermission) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logUpdate, logDelete } from '@/lib/data-logger';
+import { hasPermissionByName } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,7 @@ export async function PUT(
       include: { permissions: true }
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Record Usage');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Record Usage') : false;
     if (!hasPermission) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
@@ -229,7 +230,7 @@ export async function DELETE(
       include: { permissions: true }
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Record Usage');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Record Usage') : false;
     if (!hasPermission) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },

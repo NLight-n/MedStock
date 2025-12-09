@@ -3,6 +3,15 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+const formatPermissionName = (name: string) => {
+  if (!name) return name
+  const cleaned = name.replace(/_/g, ' ').toLowerCase()
+  return cleaned
+    .split(' ')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
@@ -26,11 +35,16 @@ export async function GET() {
       )
     }
 
-    return NextResponse.json({ 
+    const formattedPermissions = user.permissions.map((p: { name: string }) => ({
+      ...p,
+      name: formatPermissionName(p.name),
+    }))
+
+    return NextResponse.json({
       user: {
         ...session.user,
-        permissions: user.permissions
-      }
+        permissions: formattedPermissions,
+      },
     })
   } catch (error) {
     console.error('Error in /api/auth/me:', error)

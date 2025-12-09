@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { hasPermissionByName } from '@/lib/permissions';
 
 export async function GET() {
   try {
@@ -16,7 +17,7 @@ export async function GET() {
       include: { permissions: true },
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Users');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Users') : false;
     if (!hasPermission) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logCreate } from '@/lib/data-logger';
+import { hasPermissionByName } from '@/lib/permissions';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
@@ -28,7 +29,7 @@ export async function GET() {
       include: { permissions: true },
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Settings');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Settings') : false;
     if (!hasPermission) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
         where: { id: session.user.id },
         include: { permissions: true },
       });
-      const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Settings');
+      const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Settings') : false;
       if (!hasPermission) {
         return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
       }
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
         where: { id: session.user.id },
         include: { permissions: true },
       });
-      const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Settings');
+      const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Settings') : false;
       if (!hasPermission) {
         return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
       }

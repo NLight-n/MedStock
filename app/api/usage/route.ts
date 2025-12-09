@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logCreate } from '@/lib/data-logger';
+import { hasPermissionByName } from '@/lib/permissions';
 import { Prisma } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
       include: { permissions: true }
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Record Usage');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Record Usage') : false;
     if (!hasPermission) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },

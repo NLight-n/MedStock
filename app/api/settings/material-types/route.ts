@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { NextRequest } from 'next/server';
 import { logCreate } from '@/lib/data-logger';
+import { hasPermissionByName } from '@/lib/permissions';
 
 // GET /api/settings/material-types
 export async function GET(_request: NextRequest) {
@@ -19,7 +20,7 @@ export async function GET(_request: NextRequest) {
       include: { permissions: true },
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Settings');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Settings') : false;
     if (!hasPermission) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
       include: { permissions: true },
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Settings');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Settings') : false;
     if (!hasPermission) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }

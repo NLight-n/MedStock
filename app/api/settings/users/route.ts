@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logCreate } from '@/lib/data-logger';
+import { hasPermissionByName } from '@/lib/permissions';
 import bcrypt from 'bcryptjs';
 
 export async function GET() {
@@ -18,7 +19,7 @@ export async function GET() {
       include: { permissions: true },
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Users');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Users') : false;
     if (!hasPermission) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       include: { permissions: true },
     });
 
-    const hasPermission = user?.permissions.some((p: { name: string }) => p.name === 'Manage Users');
+    const hasPermission = user ? hasPermissionByName(user.permissions, 'Manage Users') : false;
     if (!hasPermission) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
