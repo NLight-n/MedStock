@@ -16,6 +16,32 @@ import { promisify as pify } from 'util';
 
 const execAsync = promisify(exec);
 
+// Helper function to get database connection details from environment
+function getDbConfig() {
+  // Try to parse DATABASE_URL first
+  const dbUrl = process.env.DATABASE_URL;
+  if (dbUrl) {
+    try {
+      const url = new URL(dbUrl);
+      return {
+        user: url.username || process.env.POSTGRES_USER || 'postgres',
+        host: url.hostname || process.env.POSTGRES_HOST || 'postgres',
+        port: url.port || process.env.POSTGRES_PORT || '5432',
+        database: url.pathname.slice(1) || process.env.POSTGRES_DB || 'medstock',
+      };
+    } catch {
+      // If parsing fails, fall back to individual env vars
+    }
+  }
+  // Fall back to individual environment variables
+  return {
+    user: process.env.POSTGRES_USER || 'postgres',
+    host: process.env.POSTGRES_HOST || 'postgres',
+    port: process.env.POSTGRES_PORT || '5432',
+    database: process.env.POSTGRES_DB || 'medstock',
+  };
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -110,13 +136,15 @@ export async function POST(request: NextRequest) {
       if (!dumpPath) {
         return NextResponse.json({ error: 'No dump path found' }, { status: 500 });
       }
+      const dbConfig = getDbConfig();
       const containerDumpPath = `/backups/${(dumpPath ?? '').split('\\').pop()?.split('/').pop()}`;
       const pgRestoreCmd = [
         `PGPASSWORD=${password}`,
         'pg_restore',
-        '-U', 'postgres',
-        '-h', 'postgres',
-        '-d', 'medstock',
+        '-U', dbConfig.user,
+        '-h', dbConfig.host,
+        '-p', dbConfig.port,
+        '-d', dbConfig.database,
         containerDumpPath
       ].join(' ');
       console.log('Executing pg_restore:', pgRestoreCmd);
@@ -166,14 +194,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'PG_BACKUP_PASSWORD not set in environment' }, { status: 500 });
       }
       // Compose pg_dump command to run directly in this container
+      const dbConfig = getDbConfig();
       const pgDumpCmd = [
         `PGPASSWORD=${password}`,
         'pg_dump',
-        '-U', 'postgres',
-        '-h', 'postgres',
+        '-U', dbConfig.user,
+        '-h', dbConfig.host,
+        '-p', dbConfig.port,
         '-F', 'c',
         '-f', filePath,
-        'medstock'
+        dbConfig.database
       ].join(' ');
       // Run pg_dump inside the web container
       console.log('Executing pg_dump:', pgDumpCmd);

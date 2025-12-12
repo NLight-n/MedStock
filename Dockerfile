@@ -25,6 +25,11 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
+# Install OpenSSL for Prisma engine detection/build
+RUN apt-get update && apt-get install -y \
+  openssl \
+  && apt-get clean
+
 COPY . .
 COPY --from=deps /app/node_modules ./node_modules
 
