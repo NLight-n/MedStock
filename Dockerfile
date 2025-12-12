@@ -53,10 +53,21 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Install runtime dependencies
+# Add PostgreSQL official APT repository for PostgreSQL 17 client
 RUN apt-get update && apt-get install -y \
   dumb-init \
-  postgresql-client \
-  && apt-get clean
+  wget \
+  ca-certificates \
+  gnupg \
+  lsb-release \
+  && mkdir -p /etc/apt/keyrings \
+  && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg \
+  && echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+  && apt-get update \
+  && apt-get install -y \
+  postgresql-client-17 \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
 RUN groupadd -g 1001 nodejs \
