@@ -23,11 +23,13 @@ function getDbConfig() {
   if (dbUrl) {
     try {
       const url = new URL(dbUrl);
+      // Extract database name from pathname, removing leading slash and query string
+      const database = url.pathname.slice(1).split('?')[0] || process.env.POSTGRES_DB || 'medstock';
       return {
         user: url.username || process.env.POSTGRES_USER || 'postgres',
         host: url.hostname || process.env.POSTGRES_HOST || 'postgres',
         port: url.port || process.env.POSTGRES_PORT || '5432',
-        database: url.pathname.slice(1) || process.env.POSTGRES_DB || 'medstock',
+        database: database,
       };
     } catch {
       // If parsing fails, fall back to individual env vars
